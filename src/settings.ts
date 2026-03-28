@@ -21,15 +21,7 @@ import type {
 } from "./baseTypes";
 
 import cloneDeep from "lodash/cloneDeep";
-import { generateAzureBlobStorageSettingsPart } from "../pro/src/settingsAzureBlobStorage";
-import { generateBoxSettingsPart } from "../pro/src/settingsBox";
 import { generateClearDupFilesSettingsPart } from "../pro/src/settingsClearDupFiles";
-import { generateGoogleDriveSettingsPart } from "../pro/src/settingsGoogleDrive";
-import { generateKoofrSettingsPart } from "../pro/src/settingsKoofr";
-import { generateOnedriveFullSettingsPart } from "../pro/src/settingsOnedriveFull";
-import { generatePCloudSettingsPart } from "../pro/src/settingsPCloud";
-import { generateProSettingsPart } from "../pro/src/settingsPro";
-import { generateYandexDiskSettingsPart } from "../pro/src/settingsYandexDisk";
 import { API_VER_ENSURE_REQURL_OK, VALID_REQURL } from "./baseTypesObs";
 import { messyConfigToNormal } from "./configPersist";
 import {
@@ -775,14 +767,7 @@ class ExportSelectorModal extends Modal {
           { id: "s3", label: "S3" },
           { id: "dropbox", label: "Dropbox" },
           { id: "onedrive", label: "OneDrive (App Folder)" },
-          { id: "onedrivefull", label: "OneDrive (Full)" },
           { id: "webdav", label: "Webdav" },
-          { id: "googledrive", label: "Google Drive" },
-          { id: "box", label: "Box" },
-          { id: "pcloud", label: "pCloud" },
-          { id: "yandexdisk", label: "Yandex Disk" },
-          { id: "koofr", label: "Koofr" },
-          { id: "azureblobstorage", label: "Azure Blob" },
           { id: "webdis", label: "Webdis" },
         ];
         services.forEach((service) => {
@@ -811,6 +796,19 @@ class ExportSelectorModal extends Modal {
 
   createExportItem(container: HTMLElement, type: QRExportType, label: string) {
     const item = container.createDiv({ cls: "rs-export-item" });
+    
+    // Add simple icon representation
+    const iconEl = item.createDiv({ cls: "rs-export-item-icon" });
+    if (type === "basic_and_advanced") {
+      iconEl.setText("⚙️");
+    } else if (["s3", "dropbox", "onedrive", "googledrive", "azureblobstorage"].includes(type)) {
+      iconEl.setText("☁️");
+    } else if (type === "webdav" || type === "webdis") {
+      iconEl.setText("🌐");
+    } else {
+      iconEl.setText("📁");
+    }
+
     item.createDiv({ cls: "rs-export-item-text", text: label });
     item.onClickEvent(() => {
       this.close();
@@ -831,10 +829,12 @@ class ExportSettingsQrCodeModal extends Modal {
     super(app);
     this.plugin = plugin;
     this.exportType = exportType;
+    this.modalEl.addClass("rs-qr-modal");
   }
 
   async onOpen() {
     const { contentEl } = this;
+    contentEl.empty();
 
     const t = (x: TransItemType, vars?: any) => {
       return this.plugin.i18n.t(x, vars);
@@ -847,39 +847,44 @@ class ExportSettingsQrCodeModal extends Modal {
       this.exportType
     );
 
-    const div1 = contentEl.createDiv();
+    contentEl.createEl("h2", { text: t("settings_export") });
+
+    const container = contentEl.createDiv({ cls: "rs-qr-container" });
+
+    // Info Box (Notion-style)
+    const infoBox = container.createDiv({ cls: "rs-qr-info-box" });
     t("modal_qr_shortdesc")
       .split("\n")
       .forEach((val) => {
-        div1.createEl("p", {
-          text: val,
-        });
+        if (val.trim()) {
+          infoBox.createEl("p", { text: val });
+        }
       });
 
-    const div2 = contentEl.createDiv();
-    div2.createEl(
-      "button",
-      {
-        text: t("modal_qr_button"),
-      },
-      (el) => {
-        el.onclick = async () => {
-          await navigator.clipboard.writeText(rawUri);
-          new Notice(t("modal_qr_button_notice"));
-        };
-      }
-    );
+    // QR Image Wrapper
+    const imgWrapper = container.createDiv({ cls: "rs-qr-image-wrapper" });
+    imgWrapper.createEl("img", {
+      attr: { src: imgUri },
+    });
 
-    const div3 = contentEl.createDiv();
-    div3.createEl(
-      "img",
-      {
-        cls: "qrcode-img",
-      },
-      async (el) => {
-        el.src = imgUri;
-      }
-    );
+    // Actions
+    const actions = container.createDiv({ cls: "rs-qr-actions" });
+
+    const copyBtn = actions.createEl("button", {
+      cls: "mod-cta",
+      text: t("modal_qr_button"),
+    });
+    copyBtn.onclick = async () => {
+      await navigator.clipboard.writeText(rawUri);
+      new Notice(t("modal_qr_button_notice"));
+    };
+
+    const closeBtn = actions.createEl("button", {
+      text: t("confirm"),
+    });
+    closeBtn.onclick = () => {
+      this.close();
+    };
   }
 
   onClose() {
@@ -941,8 +946,8 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
 
     const tabs = [
       { id: "service", label: t("settings_chooseservice") },
-      { id: "sync", label: t("settings_adv") },
-      { id: "pro", label: "Pro" },
+      { id: "basic", label: t("settings_basic") },
+      { id: "adv", label: t("settings_adv") },
       { id: "tools", label: t("settings_importexport") },
     ];
 
@@ -1980,97 +1985,6 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
       });
 
     //////////////////////////////////////////////////
-    // below for Onedrive (Full)
-    //////////////////////////////////////////////////
-
-    const {
-      onedriveFullDiv,
-      onedriveFullAllowedToUsedDiv,
-      onedriveFullNotShowUpHintSetting,
-    } = generateOnedriveFullSettingsPart(
-      sectionEls["service"],
-      t,
-      this.app,
-      this.plugin,
-      () => this.plugin.saveSettings()
-    );
-
-    //////////////////////////////////////////////////
-    // below for googledrive
-    //////////////////////////////////////////////////
-
-    const {
-      googleDriveDiv,
-      googleDriveAllowedToUsedDiv,
-      googleDriveNotShowUpHintSetting,
-    } = generateGoogleDriveSettingsPart(
-      sectionEls["service"],
-      t,
-      this.app,
-      this.plugin,
-      () => this.plugin.saveSettings()
-    );
-
-    //////////////////////////////////////////////////
-    // below for box
-    //////////////////////////////////////////////////
-
-    const { boxDiv, boxAllowedToUsedDiv, boxNotShowUpHintSetting } =
-      generateBoxSettingsPart(sectionEls["service"], t, this.app, this.plugin, () =>
-        this.plugin.saveSettings()
-      );
-
-    //////////////////////////////////////////////////
-    // below for pcloud
-    //////////////////////////////////////////////////
-
-    const { pCloudDiv, pCloudAllowedToUsedDiv, pCloudNotShowUpHintSetting } =
-      generatePCloudSettingsPart(sectionEls["service"], t, this.app, this.plugin, () =>
-        this.plugin.saveSettings()
-      );
-
-    //////////////////////////////////////////////////
-    // below for yandexdisk
-    //////////////////////////////////////////////////
-
-    const {
-      yandexDiskDiv,
-      yandexDiskAllowedToUsedDiv,
-      yandexDiskNotShowUpHintSetting,
-    } = generateYandexDiskSettingsPart(
-      sectionEls["service"],
-      t,
-      this.app,
-      this.plugin,
-      () => this.plugin.saveSettings()
-    );
-
-    //////////////////////////////////////////////////
-    // below for koofr
-    //////////////////////////////////////////////////
-
-    const { koofrDiv, koofrAllowedToUsedDiv, koofrNotShowUpHintSetting } =
-      generateKoofrSettingsPart(sectionEls["service"], t, this.app, this.plugin, () =>
-        this.plugin.saveSettings()
-      );
-
-    //////////////////////////////////////////////////
-    // below for Azure Blob Storage
-    //////////////////////////////////////////////////
-
-    const {
-      azureBlobStorageDiv,
-      azureBlobStorageAllowedToUsedDiv,
-      azureBlobStorageNotShowUpHintSetting,
-    } = generateAzureBlobStorageSettingsPart(
-      sectionEls["service"],
-      t,
-      this.app,
-      this.plugin,
-      () => this.plugin.saveSettings()
-    );
-
-    //////////////////////////////////////////////////
     // below for general chooser (part 2/2)
     //////////////////////////////////////////////////
 
@@ -2085,32 +1999,6 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
         dropdown.addOption("webdav", t("settings_chooseservice_webdav"));
         dropdown.addOption("onedrive", t("settings_chooseservice_onedrive"));
         dropdown.addOption("webdis", t("settings_chooseservice_webdis"));
-
-        dropdown.addOption("separator line", "-----");
-        (dropdown.selectEl.lastChild as HTMLElement).setAttribute(
-          "disabled",
-          "disabled"
-        );
-
-        dropdown.addOption(
-          "googledrive",
-          t("settings_chooseservice_googledrive")
-        );
-        dropdown.addOption(
-          "onedrivefull",
-          t("settings_chooseservice_onedrivefull")
-        );
-        dropdown.addOption("box", t("settings_chooseservice_box"));
-        dropdown.addOption("pcloud", t("settings_chooseservice_pcloud"));
-        dropdown.addOption(
-          "yandexdisk",
-          t("settings_chooseservice_yandexdisk")
-        );
-        dropdown.addOption("koofr", t("settings_chooseservice_koofr"));
-        dropdown.addOption(
-          "azureblobstorage",
-          t("settings_chooseservice_azureblobstorage")
-        );
 
         dropdown
           .setValue(this.plugin.settings.serviceType)
@@ -2128,10 +2016,6 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
               "onedrive-hide",
               this.plugin.settings.serviceType !== "onedrive"
             );
-            onedriveFullDiv.toggleClass(
-              "onedrivefull-hide",
-              this.plugin.settings.serviceType !== "onedrivefull"
-            );
             webdavDiv.toggleClass(
               "webdav-hide",
               this.plugin.settings.serviceType !== "webdav"
@@ -2139,30 +2023,6 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
             webdisDiv.toggleClass(
               "webdis-hide",
               this.plugin.settings.serviceType !== "webdis"
-            );
-            googleDriveDiv.toggleClass(
-              "googledrive-hide",
-              this.plugin.settings.serviceType !== "googledrive"
-            );
-            boxDiv.toggleClass(
-              "box-hide",
-              this.plugin.settings.serviceType !== "box"
-            );
-            pCloudDiv.toggleClass(
-              "pcloud-hide",
-              this.plugin.settings.serviceType !== "pcloud"
-            );
-            yandexDiskDiv.toggleClass(
-              "yandexdisk-hide",
-              this.plugin.settings.serviceType !== "yandexdisk"
-            );
-            koofrDiv.toggleClass(
-              "koofr-hide",
-              this.plugin.settings.serviceType !== "koofr"
-            );
-            azureBlobStorageDiv.toggleClass(
-              "azureblobstorage-hide",
-              this.plugin.settings.serviceType !== "azureblobstorage"
             );
 
             await this.plugin.saveSettings();
@@ -2173,7 +2033,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for basic settings
     //////////////////////////////////////////////////
 
-    const basicDiv = sectionEls["sync"].createEl("div");
+    const basicDiv = sectionEls["basic"].createEl("div");
     basicDiv.createEl("h2", { text: t("settings_basic") });
 
     const passwordSetting = new Setting(basicDiv);
@@ -2412,7 +2272,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
     // below for advanced settings
     //////////////////////////////////////////////////
-    const advDiv = sectionEls["sync"].createEl("div");
+    const advDiv = sectionEls["adv"].createEl("div");
     advDiv.createEl("h2", {
       text: t("settings_adv"),
     });
@@ -2778,33 +2638,6 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
           }
         });
       });
-
-    //////////////////////////////////////////////////
-    // below for pro
-    //////////////////////////////////////////////////
-
-    const proDiv = sectionEls["pro"].createEl("div");
-    generateProSettingsPart(
-      proDiv,
-      t,
-      this.app,
-      this.plugin,
-      () => this.plugin.saveSettings(),
-      onedriveFullAllowedToUsedDiv,
-      onedriveFullNotShowUpHintSetting,
-      googleDriveAllowedToUsedDiv,
-      googleDriveNotShowUpHintSetting,
-      boxAllowedToUsedDiv,
-      boxNotShowUpHintSetting,
-      pCloudAllowedToUsedDiv,
-      pCloudNotShowUpHintSetting,
-      yandexDiskAllowedToUsedDiv,
-      yandexDiskNotShowUpHintSetting,
-      koofrAllowedToUsedDiv,
-      koofrNotShowUpHintSetting,
-      azureBlobStorageAllowedToUsedDiv,
-      azureBlobStorageNotShowUpHintSetting
-    );
 
     //////////////////////////////////////////////////
     // below for debug

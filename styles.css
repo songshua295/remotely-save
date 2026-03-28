@@ -323,9 +323,132 @@
   display: none;
 }
 
-.qrcode-img {
-  width: 350px;
-  height: 350px;
+/* Remotely Save Export Modal Styles */
+.rs-export-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 10px 0;
+}
+
+.rs-export-tabs-container {
+  display: flex;
+  border-bottom: 1px solid var(--background-modifier-border);
+  gap: 8px;
+}
+
+.rs-export-tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-size: 0.95em;
+}
+
+.rs-export-tab:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+}
+
+.rs-export-tab.is-active {
+  color: var(--interactive-accent);
+  border-bottom-color: var(--interactive-accent);
+}
+
+.rs-export-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.rs-export-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 15px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: var(--background-secondary);
+}
+
+.rs-export-item:hover {
+  background-color: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.rs-export-item-text {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--text-normal);
+}
+
+.rs-export-item-icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+
+/* QR Code Modal Styles */
+.rs-qr-modal {
+  max-width: 450px;
+  text-align: center;
+}
+
+.rs-qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.rs-qr-image-wrapper {
+  background-color: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rs-qr-image-wrapper img {
+  display: block;
+  max-width: 250px;
+  height: auto;
+}
+
+.rs-qr-info-box {
+  background-color: var(--background-secondary);
+  border-left: 4px solid var(--interactive-accent);
+  padding: 16px;
+  border-radius: 0 8px 8px 0;
+  text-align: left;
+  width: 100%;
+  font-size: 0.9em;
+  color: var(--text-normal);
+  line-height: 1.5;
+}
+
+.rs-qr-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.rs-qr-actions button {
+  flex: 1;
+  max-width: 200px;
 }
 
 .ignorepaths-textarea {

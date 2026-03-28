@@ -24,44 +24,8 @@ import {
   setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplacePro,
 } from "../pro/src/account";
 import {
-  COMMAND_CALLBACK_BOX,
-  COMMAND_CALLBACK_KOOFR,
-  COMMAND_CALLBACK_ONEDRIVEFULL,
-  COMMAND_CALLBACK_PCLOUD,
   COMMAND_CALLBACK_PRO,
-  COMMAND_CALLBACK_YANDEXDISK,
 } from "../pro/src/baseTypesPro";
-import { DEFAULT_AZUREBLOBSTORAGE_CONFIG } from "../pro/src/fsAzureBlobStorage";
-import {
-  DEFAULT_BOX_CONFIG,
-  FakeFsBox,
-  sendAuthReq as sendAuthReqBox,
-  setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplaceBox,
-} from "../pro/src/fsBox";
-import { DEFAULT_GOOGLEDRIVE_CONFIG } from "../pro/src/fsGoogleDrive";
-import {
-  DEFAULT_KOOFR_CONFIG,
-  sendAuthReq as sendAuthReqKoofr,
-  setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplaceKoofr,
-} from "../pro/src/fsKoofr";
-import {
-  type AccessCodeResponseSuccessfulType as AccessCodeResponseSuccessfulTypeOnedriveFull,
-  DEFAULT_ONEDRIVEFULL_CONFIG,
-  sendAuthReq as sendAuthReqOnedriveFull,
-  setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplaceOnedriveFull,
-} from "../pro/src/fsOnedriveFull";
-import {
-  type AuthAllowFirstRes as AuthAllowFirstResPCloud,
-  DEFAULT_PCLOUD_CONFIG,
-  generateAuthUrl as generateAuthUrlPCloud,
-  sendAuthReq as sendAuthReqPCloud,
-  setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplacePCloud,
-} from "../pro/src/fsPCloud";
-import {
-  DEFAULT_YANDEXDISK_CONFIG,
-  sendAuthReq as sendAuthReqYandexDisk,
-  setConfigBySuccessfullAuthInplace as setConfigBySuccessfullAuthInplaceYandexDisk,
-} from "../pro/src/fsYandexDisk";
 import { syncer } from "../pro/src/sync";
 import type {
   RemotelySavePluginSettings,
@@ -145,7 +109,7 @@ const DEFAULT_SETTINGS: RemotelySavePluginSettings = {
   enableStatusBarInfo: true,
   deleteToWhere: "system",
   agreeToUseSyncV3: false,
-  conflictAction: "keep_newer",
+  conflictAction: "smart_conflict",
   howToCleanEmptyFolder: "clean_both",
   protectModifyPercentage: 50,
   syncDirection: "bidirectional",
