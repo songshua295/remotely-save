@@ -99,6 +99,124 @@
   display: none;
 }
 
+/* Notion-like Styles for Remotely Save Settings */
+.rs-settings-tabs {
+  display: flex;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  background-color: var(--background-primary);
+  z-index: 10;
+  padding-top: 10px;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none; /* Firefox */
+}
+
+.rs-settings-tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.rs-settings-tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 4px 4px 0 0;
+  font-size: 0.95em;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+  .rs-settings-tab {
+    padding: 8px 12px;
+    font-size: 0.85em;
+  }
+  
+  .rs-settings-container h2 {
+    font-size: 1.1em;
+  }
+}
+
+
+.rs-settings-tab:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.rs-settings-tab.is-active {
+  color: var(--interactive-accent);
+  border-bottom: 2px solid var(--interactive-accent);
+}
+
+.rs-settings-section {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.rs-settings-section.is-active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Notion-like block styling */
+.rs-settings-container h2 {
+  font-size: 1.2em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--text-normal);
+  border-bottom: none;
+}
+
+.rs-settings-container .setting-item {
+  border-top: none;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding: 12px 0;
+}
+
+.rs-settings-container .setting-item:last-child {
+  border-bottom: none;
+}
+
+.rs-settings-container .settings-long-desc {
+  background-color: var(--background-secondary);
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 0.9em;
+  border-left: 3px solid var(--interactive-accent);
+}
+
+.rs-settings-container .setting-item-description {
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+/* Custom Notion-like colors for dark/light mode */
+.theme-light .rs-settings-container {
+  --notion-bg: #ffffff;
+  --notion-text: #37352f;
+  --notion-border: #e1e1e1;
+  --notion-hover: #f1f1f1;
+}
+
+.theme-dark .rs-settings-container {
+  --notion-bg: #191919;
+  --notion-text: #d4d4d4;
+  --notion-border: #373737;
+  --notion-hover: #2f2f2f;
+}
+
+
 .googledrive-disclaimer {
   font-weight: bold;
 }

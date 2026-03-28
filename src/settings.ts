@@ -731,6 +731,99 @@ class SyncConfigDirModal extends Modal {
   }
 }
 
+class ExportSelectorModal extends Modal {
+  private plugin: RemotelySavePlugin;
+
+  constructor(app: App, plugin: RemotelySavePlugin) {
+    super(app);
+    this.plugin = plugin;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+
+    const t = (x: TransItemType, vars?: any) => {
+      return this.plugin.i18n.t(x, vars);
+    };
+
+    contentEl.createEl("h2", { text: t("settings_export") });
+
+    const container = contentEl.createDiv({ cls: "rs-export-modal-container" });
+    const tabsContainer = container.createDiv({
+      cls: "rs-export-tabs-container",
+    });
+    const contentArea = container.createDiv({ cls: "rs-export-content" });
+
+    const tabs = [
+      { id: "general", label: t("settings_adv") },
+      { id: "services", label: t("settings_chooseservice") },
+    ];
+
+    let activeTab = "general";
+
+    const renderContent = (tabId: string) => {
+      contentArea.empty();
+      if (tabId === "general") {
+        this.createExportItem(
+          contentArea,
+          "basic_and_advanced",
+          t("settings_export_basic_and_advanced_button")
+        );
+      } else {
+        const services: { id: QRExportType; label: string }[] = [
+          { id: "s3", label: "S3" },
+          { id: "dropbox", label: "Dropbox" },
+          { id: "onedrive", label: "OneDrive (App Folder)" },
+          { id: "onedrivefull", label: "OneDrive (Full)" },
+          { id: "webdav", label: "Webdav" },
+          { id: "googledrive", label: "Google Drive" },
+          { id: "box", label: "Box" },
+          { id: "pcloud", label: "pCloud" },
+          { id: "yandexdisk", label: "Yandex Disk" },
+          { id: "koofr", label: "Koofr" },
+          { id: "azureblobstorage", label: "Azure Blob" },
+          { id: "webdis", label: "Webdis" },
+        ];
+        services.forEach((service) => {
+          this.createExportItem(contentArea, service.id, service.label);
+        });
+      }
+    };
+
+    tabs.forEach((tab) => {
+      const tabEl = tabsContainer.createDiv({
+        cls: `rs-export-tab ${activeTab === tab.id ? "is-active" : ""}`,
+        text: tab.label,
+      });
+      tabEl.onClickEvent(() => {
+        activeTab = tab.id;
+        tabsContainer
+          .querySelectorAll(".rs-export-tab")
+          .forEach((el) => el.classList.remove("is-active"));
+        tabEl.classList.add("is-active");
+        renderContent(activeTab);
+      });
+    });
+
+    renderContent(activeTab);
+  }
+
+  createExportItem(container: HTMLElement, type: QRExportType, label: string) {
+    const item = container.createDiv({ cls: "rs-export-item" });
+    item.createDiv({ cls: "rs-export-item-text", text: label });
+    item.onClickEvent(() => {
+      this.close();
+      new ExportSettingsQrCodeModal(this.app, this.plugin, type).open();
+    });
+  }
+
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+}
+
 class ExportSettingsQrCodeModal extends Modal {
   plugin: RemotelySavePlugin;
   exportType: QRExportType;
@@ -841,19 +934,59 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
 
     containerEl.createEl("h1", { text: "Remotely Save" });
 
+    const tabsContainer = containerEl.createDiv({ cls: "rs-settings-tabs" });
+    const sectionsContainer = containerEl.createDiv({
+      cls: "rs-settings-container",
+    });
+
+    const tabs = [
+      { id: "service", label: t("settings_chooseservice") },
+      { id: "sync", label: t("settings_adv") },
+      { id: "pro", label: "Pro" },
+      { id: "tools", label: t("settings_importexport") },
+    ];
+
+    const tabEls: Record<string, HTMLElement> = {};
+    const sectionEls: Record<string, HTMLElement> = {};
+
+    let activeTab = "service";
+
+    tabs.forEach((tab) => {
+      const tabEl = tabsContainer.createDiv({
+        cls: `rs-settings-tab ${activeTab === tab.id ? "is-active" : ""}`,
+        text: tab.label,
+      });
+      tabEls[tab.id] = tabEl;
+
+      const sectionEl = sectionsContainer.createDiv({
+        cls: `rs-settings-section ${activeTab === tab.id ? "is-active" : ""}`,
+      });
+      sectionEls[tab.id] = sectionEl;
+
+      tabEl.onClickEvent(() => {
+        activeTab = tab.id;
+        Object.values(tabEls).forEach((el) => el.classList.remove("is-active"));
+        Object.values(sectionEls).forEach((el) =>
+          el.classList.remove("is-active")
+        );
+        tabEl.classList.add("is-active");
+        sectionEl.classList.add("is-active");
+      });
+    });
+
     //////////////////////////////////////////////////
     // below for service chooser (part 1/2)
     //////////////////////////////////////////////////
 
     // we need to create the div in advance of any other service divs
-    const serviceChooserDiv = containerEl.createDiv();
+    const serviceChooserDiv = sectionEls["service"].createDiv();
     serviceChooserDiv.createEl("h2", { text: t("settings_chooseservice") });
 
     //////////////////////////////////////////////////
     // below for s3
     //////////////////////////////////////////////////
 
-    const s3Div = containerEl.createEl("div", { cls: "s3-hide" });
+    const s3Div = sectionEls["service"].createEl("div", { cls: "s3-hide" });
     s3Div.toggleClass("s3-hide", this.plugin.settings.serviceType !== "s3");
     s3Div.createEl("h2", { text: t("settings_s3") });
 
@@ -1151,7 +1284,9 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for dropbpx
     //////////////////////////////////////////////////
 
-    const dropboxDiv = containerEl.createEl("div", { cls: "dropbox-hide" });
+    const dropboxDiv = sectionEls["service"].createEl("div", {
+      cls: "dropbox-hide",
+    });
     dropboxDiv.toggleClass(
       "dropbox-hide",
       this.plugin.settings.serviceType !== "dropbox"
@@ -1331,7 +1466,9 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for onedrive
     //////////////////////////////////////////////////
 
-    const onedriveDiv = containerEl.createEl("div", { cls: "onedrive-hide" });
+    const onedriveDiv = sectionEls["service"].createEl("div", {
+      cls: "onedrive-hide",
+    });
     onedriveDiv.toggleClass(
       "onedrive-hide",
       this.plugin.settings.serviceType !== "onedrive"
@@ -1488,7 +1625,9 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for webdav
     //////////////////////////////////////////////////
 
-    const webdavDiv = containerEl.createEl("div", { cls: "webdav-hide" });
+    const webdavDiv = sectionEls["service"].createEl("div", {
+      cls: "webdav-hide",
+    });
     webdavDiv.toggleClass(
       "webdav-hide",
       this.plugin.settings.serviceType !== "webdav"
@@ -1717,7 +1856,9 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for webdis
     //////////////////////////////////////////////////
 
-    const webdisDiv = containerEl.createEl("div", { cls: "webdis-hide" });
+    const webdisDiv = sectionEls["service"].createEl("div", {
+      cls: "webdis-hide",
+    });
     webdisDiv.toggleClass(
       "webdis-hide",
       this.plugin.settings.serviceType !== "webdis"
@@ -1847,7 +1988,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
       onedriveFullAllowedToUsedDiv,
       onedriveFullNotShowUpHintSetting,
     } = generateOnedriveFullSettingsPart(
-      containerEl,
+      sectionEls["service"],
       t,
       this.app,
       this.plugin,
@@ -1863,7 +2004,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
       googleDriveAllowedToUsedDiv,
       googleDriveNotShowUpHintSetting,
     } = generateGoogleDriveSettingsPart(
-      containerEl,
+      sectionEls["service"],
       t,
       this.app,
       this.plugin,
@@ -1875,7 +2016,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
 
     const { boxDiv, boxAllowedToUsedDiv, boxNotShowUpHintSetting } =
-      generateBoxSettingsPart(containerEl, t, this.app, this.plugin, () =>
+      generateBoxSettingsPart(sectionEls["service"], t, this.app, this.plugin, () =>
         this.plugin.saveSettings()
       );
 
@@ -1884,7 +2025,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
 
     const { pCloudDiv, pCloudAllowedToUsedDiv, pCloudNotShowUpHintSetting } =
-      generatePCloudSettingsPart(containerEl, t, this.app, this.plugin, () =>
+      generatePCloudSettingsPart(sectionEls["service"], t, this.app, this.plugin, () =>
         this.plugin.saveSettings()
       );
 
@@ -1897,7 +2038,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
       yandexDiskAllowedToUsedDiv,
       yandexDiskNotShowUpHintSetting,
     } = generateYandexDiskSettingsPart(
-      containerEl,
+      sectionEls["service"],
       t,
       this.app,
       this.plugin,
@@ -1909,7 +2050,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
 
     const { koofrDiv, koofrAllowedToUsedDiv, koofrNotShowUpHintSetting } =
-      generateKoofrSettingsPart(containerEl, t, this.app, this.plugin, () =>
+      generateKoofrSettingsPart(sectionEls["service"], t, this.app, this.plugin, () =>
         this.plugin.saveSettings()
       );
 
@@ -1922,7 +2063,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
       azureBlobStorageAllowedToUsedDiv,
       azureBlobStorageNotShowUpHintSetting,
     } = generateAzureBlobStorageSettingsPart(
-      containerEl,
+      sectionEls["service"],
       t,
       this.app,
       this.plugin,
@@ -2032,7 +2173,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for basic settings
     //////////////////////////////////////////////////
 
-    const basicDiv = containerEl.createEl("div");
+    const basicDiv = sectionEls["sync"].createEl("div");
     basicDiv.createEl("h2", { text: t("settings_basic") });
 
     const passwordSetting = new Setting(basicDiv);
@@ -2271,7 +2412,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
     // below for advanced settings
     //////////////////////////////////////////////////
-    const advDiv = containerEl.createEl("div");
+    const advDiv = sectionEls["sync"].createEl("div");
     advDiv.createEl("h2", {
       text: t("settings_adv"),
     });
@@ -2571,7 +2712,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     //////////////////////////////////////////////////
 
     // import and export
-    const importExportDiv = containerEl.createEl("div");
+    const importExportDiv = sectionEls["tools"].createEl("div");
     importExportDiv.createEl("h2", {
       text: t("settings_importexport"),
     });
@@ -2580,113 +2721,11 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
       .setName(t("settings_export"))
       .setDesc(t("settings_export_desc"));
     importExportDivSetting1.settingEl.addClass("setting-need-wrapping");
-    importExportDivSetting1
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_basic_and_advanced_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(
-            this.app,
-            this.plugin,
-            "basic_and_advanced"
-          ).open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_s3_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(this.app, this.plugin, "s3").open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_dropbox_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(
-            this.app,
-            this.plugin,
-            "dropbox"
-          ).open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_onedrive_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(
-            this.app,
-            this.plugin,
-            "onedrive"
-          ).open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_onedrivefull_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(
-            this.app,
-            this.plugin,
-            "onedrivefull"
-          ).open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_webdav_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(this.app, this.plugin, "webdav").open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_webdis_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(this.app, this.plugin, "webdis").open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_googledrive_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(
-            this.app,
-            this.plugin,
-            "googledrive"
-          ).open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_box_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(this.app, this.plugin, "box").open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_pcloud_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(this.app, this.plugin, "pcloud").open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_yandexdisk_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(
-            this.app,
-            this.plugin,
-            "yandexdisk"
-          ).open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_koofr_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(this.app, this.plugin, "koofr").open();
-        });
-      })
-      .addButton(async (button) => {
-        button.setButtonText(t("settings_export_azureblobstorage_button"));
-        button.onClick(async () => {
-          new ExportSettingsQrCodeModal(
-            this.app,
-            this.plugin,
-            "azureblobstorage"
-          ).open();
-        });
+    importExportDivSetting1.addButton(async (button) => {
+      button.setButtonText(t("settings_export")).onClick(async () => {
+        new ExportSelectorModal(this.app, this.plugin).open();
       });
+    });
 
     let importSettingVal = "";
     new Setting(importExportDiv)
@@ -2744,7 +2783,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for pro
     //////////////////////////////////////////////////
 
-    const proDiv = containerEl.createEl("div");
+    const proDiv = sectionEls["pro"].createEl("div");
     generateProSettingsPart(
       proDiv,
       t,
@@ -2771,7 +2810,7 @@ export class RemotelySaveSettingTab extends PluginSettingTab {
     // below for debug
     //////////////////////////////////////////////////
 
-    const debugDiv = containerEl.createEl("div");
+    const debugDiv = sectionEls["tools"].createEl("div");
     debugDiv.createEl("h2", { text: t("settings_debug") });
 
     new Setting(debugDiv)

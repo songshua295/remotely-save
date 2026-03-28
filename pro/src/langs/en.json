@@ -283,7 +283,7 @@
   "settings_export_azureblobstorage_button": "Export Azure Blob Storage Part",
 
   "settings_cleardupfiles": "Clear Duplicated Files By Smart Conflict",
-  "settings_cleardupfiles_desc": "If you have ever used Smart Conflict (PRO) feature, the plugin may generate duplicated files. <strong>IF YOU ARE SURE THE DUPLICATED FILES ARE NO LONGER NEEDED</strong>, you can clear <strong>ALL</strong> of them locally here.",
+  "settings_cleardupfiles_desc": "If you have ever used Smart Conflict feature, the plugin may generate duplicated files. <strong>IF YOU ARE SURE THE DUPLICATED FILES ARE NO LONGER NEEDED</strong>, you can clear <strong>ALL</strong> of them locally here.",
   "settings_cleardupfiles_button": "Start Scanning",
 
   "settings_pro": "Account (for PRO features)",
