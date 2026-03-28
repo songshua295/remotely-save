@@ -1,7 +1,7 @@
 {
   "id": "remotely-save",
   "name": "Remotely Save",
-  "version": "0.5.26",
+  "version": "0.5.27",
   "minAppVersion": "0.13.21",
   "description": "一款非官方插件，允许用户在本地设备与云服务之间同步笔记。",
   "author": "songshua295",
